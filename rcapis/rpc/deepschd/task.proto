@@ -1,0 +1,195 @@
+syntax = "proto3";
+
+package rcrai.rpc.deepschd;
+
+import "google/protobuf/struct.proto";
+
+import "rcapis/api/annotations.proto";
+
+import "rcapis/rpc/code.proto";
+import "rcapis/rpc/status.proto";
+
+import "rcapis/rpc/deepschd/progress.proto";
+
+option cc_enable_arenas = true;
+option go_package = "github.com/rcrai/rcapis/rcapis/rpc/deepschd/task;task";
+
+option java_multiple_files = true;
+option java_outer_classname = "Task";
+option java_package = "com.rcrai.rcapis.rpc.deepschd";
+
+// Manages conversational tasks.
+service Tasks {
+    // For Producers & Consumers
+
+    // Retrieves the specified task.
+    rpc GetTask (GetTaskRequest) returns (Task) {
+        option (rcrai.api.http).get = "/v1/tasks/{project=*}/{task_id=*}/task";
+    }
+
+    // Upload Data, Create A Task
+    rpc CreateTask (CreateTaskRequest) returns (TaskProgress) {
+        option (rcrai.api.http) = {
+            post: "/v1/tasks/{project=*}/{task_id=*}/{nice=*}/task:create"
+            body: "*"
+        };
+    }
+
+    // Cancel One Task
+    rpc CancelTask (GetTaskRequest) returns (rcrai.rpc.Status) {
+        option (rcrai.api.http) = { delete: "/v1/tasks/{project=*}/{task_id=*}" };
+    }
+
+    // Check Progress
+    rpc CheckTask (GetTaskRequest) returns (TaskProgress) {
+        option (rcrai.api.http).get = "/v1/tasks/{project=*}/{task_id=*}/task:check";
+    }
+
+    // Upload Data, Create A Task
+    rpc GetTaskStatistics (StatisticsRequest) returns (StatisticsResponse) {
+        option (rcrai.api.http).get = "/v1/tasks/{project=*}/status";
+    }
+
+    // For Worker Acquire
+    rpc AcquireTask (AcquireTaskRequest) returns (AcquireTaskResponse) {
+        option (rcrai.api.http).get = "/v1/worker/{project=*}/task:fetch";
+    }
+
+    // For Worker Return
+    rpc SubmitTask (SubmitTaskRequest) returns (rcrai.rpc.Status) {
+        option (rcrai.api.http) = {
+            post: "/v1/worker/{project=*}/task:submit"
+            body: "*"
+        };
+    }
+
+}
+
+message StatisticsRequest {
+    // Required. The project of this task.
+    string project = 1;
+}
+
+message StatisticsResponse {
+    // Required. The project of this task.
+    string project = 1;
+
+    google.protobuf.Struct data = 2;
+}
+
+message TaskResult {
+    repeated google.protobuf.Struct docs = 1;
+}
+
+message Task {
+    // Required. The project of this task.
+    string project = 1;
+
+    // Required. The ID of this task.
+    string task_id = 2;
+
+    uint32 nice = 3;
+
+    Progress progress = 4;
+
+    string task_uri = 5;
+
+    oneof body {
+        // in case of progress == ok
+        TaskResult result = 6;
+
+        // in case of progress != ok
+        string message = 7;
+    }
+
+    string on_ready = 8;
+}
+
+// The request message for [Tasks.GetTask].
+message GetTaskRequest {
+    // Required. The project that the task to fetch is associated with.
+    string project = 1;
+
+    string task_id = 2;
+}
+
+message TaskProgress {
+
+    // Required. The project of this task.
+    string project = 1;
+
+    // Required. The ID of this task.
+    string task_id = 2;
+
+    // Nice Value
+    uint32 nice = 3;
+
+    Progress progress = 4;
+}
+
+// The request message for [Tasks.ImportTask].
+message CreateTaskRequest {
+    // Required. The project that the task to import is associated with.
+    string project = 1;
+
+    // ID
+    string task_id = 2;
+
+    // Nice Value
+    uint32 nice = 3;
+
+
+    oneof body {
+
+        string task_uri = 4;
+
+        // Breaking Change: Not Accept Files
+        // bytes task_content = 5;
+    }
+
+    // Url for Callback
+    string on_ready = 6;
+}
+
+
+message AcquireTaskRequest {
+    // Required. The project that the task to fetch is associated with.
+    string project = 1;
+
+    int32 count = 2;
+}
+
+message AcquiredTask {
+    string project = 1;
+
+    // ID
+    string task_id = 2;
+
+    // Nice Value, Not in use in current design
+    uint32 nice = 3;
+
+    // The task to import.
+    // Breaking Change: Not Accept Files
+    // bytes body = 4;
+
+    string task_uri = 5;
+}
+
+message AcquireTaskResponse {
+    bool is_empty = 1;
+
+    rcrai.rpc.Code code = 2;
+
+    repeated AcquiredTask tasks = 3;
+
+}
+
+message SubmitTaskRequest {
+    // Required. The project that the task to fetch is associated with.
+    string project = 1;
+
+    repeated Task tasks = 2;
+    // int32 count = 2;
+
+}
+

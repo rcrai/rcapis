@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package rcrai.rpc.deepschd;
+
+import "rcapis/api/annotations.proto";
+
+option cc_enable_arenas = true;
+option go_package = "github.com/rcrai/rcapis/rcapis/rpc/deepschd/progress;progress";
+
+option java_multiple_files = true;
+option java_outer_classname = "Progress";
+option java_package = "com.rcrai.rcapis.rpc.deepschd";
+
+enum Progress {
+    // Task is ready (You can retrieve it now)
+    OK = 0;
+
+    // Task not found
+    NOT_FOUND = 1;
+
+    // Producer Created this task with URL, but not fetched yet
+    CREATED = 2;
+
+    // Producer Uploaded this task or already fetched by the server, but no worker aquired this job yet
+    PENDING = 3;
+
+    // One worker has already acquired this job, but not finished this job
+    ACQUIRED = 4;
+
+    // Producer Canceled this task, it will not appeared in current design
+    // You'll get a 'Not Found' here
+    CANCELLED = 5;
+
+    // Permission Denied
+    // Reserved
+    PERMISSION_DENIED = 6;
+
+    // Acquired, but not return result too long time
+    TIMEOUT = 7;
+
+    // Process Failed
+    FAILED = 8;
+
+    // Reserved
+    // Unknown Error
+    // Basically it is not suggested
+    UNKNOWN = 9;
+}

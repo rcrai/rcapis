@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package rcrai.rpc.demo;
+
+import "rcapis/api/annotations.proto";
+//import "google/api/annotations.proto";
+
+import "rcapis/rpc/code.proto";
+
+option cc_enable_arenas = true;
+option go_package = "github.com/rcrai/rcapis/rcapis/rpc/demo/calculator;calculator";
+
+option java_multiple_files = true;
+option java_outer_classname = "CalculatorProto";
+option java_package = "com.rcrai.rcapis.rpc.demo";
+
+
+enum Op {
+    PLUS = 0;
+    MINUS = 1;
+    MULTIPLY = 3;
+    DIVIDE = 4;
+}
+
+message Question {
+    float lv = 1;
+    float rv = 2;
+    Op op = 3;
+}
+
+message Answer {
+    float ret = 1;
+    Code code = 2;
+}
+
+message Empty {
+
+}
+
+message EchoMessage {
+    string id = 1;
+    string value = 2;
+}
+
+message EchoRequest {
+    EchoMessage message = 1;
+}
+
+service Calculator {
+    rpc Calculate (Question) returns (Answer) {
+    }
+
+    rpc Visitor (Empty) returns (Answer) {
+    }
+
+    rpc Echo (EchoRequest) returns (EchoMessage) {
+        option (rcrai.api.http) = {
+            post: "/v1/echo"
+            body: "message"
+//            body: "*"  // if
+        };
+    }
+
+    //    rpc Echo (EchoMessage) returns (EchoMessage) {
+    //        option (rcrai.api.http) = {
+    //            post: "/v1/echo"
+    //            body: "*"
+    //        };
+    //    }
+
+
+    rpc Get (EchoMessage) returns (EchoMessage) {
+        option (rcrai.api.http).get = "/v1/{id=demo/*}/{value=*}/get";
+    }
+}
+
